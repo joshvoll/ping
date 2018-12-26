@@ -1,34 +1,32 @@
-package main 
-
+package main
 
 import (
- 	"time"
- 	"net"
-	"net/http"
 	"bytes"
 	"io"
+	"net"
+	"net/http"
+	"time"
 )
-
 
 // defining the interface
 type sizeWriter int
 
 type Response interface {
-	Status()                int
-	TLS()                   bool
-	TimeDNS()               time.Duration
-	Header()                http.Header
-	HeaderSize()            int
-	BodySize()              int
-	TimeWait()              time.Duration
+	Status() int
+	TLS() bool
+	TimeDNS() time.Duration
+	Header() http.Header
+	HeaderSize() int
+	BodySize() int
+	TimeWait() time.Duration
 	TimeResponse(time.Time) time.Duration
-	Redirects()             int
-	TimeRedirects()         time.Duration
+	Redirects() int
+	TimeRedirects() time.Duration
 	TimeDownload(time.Time) time.Duration
-	TimeTotal(time.Time)    time.Duration
-	TimeConnect()           time.Duration
-	Traces()                []Trace
-	Stats()                 *Stats
+	TimeTotal(time.Time) time.Duration
+	TimeConnect() time.Duration
+	Traces() []Trace
+	Stats() *Stats
 }
 
 // stats strct this will be in json format
@@ -39,10 +37,10 @@ type Stats struct {
 	TimeDNS       time.Duration `json:"time_dns"`
 	Header        http.Header   `json:"header, omitempty"`
 	HeaderSize    int           `json:"header_size, omitempty"`
-	BodySize      int           `json:"body_size, omitempty"` 
+	BodySize      int           `json:"body_size, omitempty"`
 	TimeWait      time.Duration `json:"time_wait"`
 	TimeResponse  time.Duration `json:"time_response"`
-	TimeConnect   time.Duration  `json:"time_connect"`
+	TimeConnect   time.Duration `json:"time_connect"`
 	Redirects     int           `json:"redirects, omitempty"`
 	TimeRedirects time.Duration `json:"time_redirects, omitempty"`
 	TimeTotal     time.Duration `json:"time_total"`
@@ -61,18 +59,18 @@ type response struct {
 
 // global properties
 var DefaultMaxRedirects = 5
-var DefaultClient       = &http.Client{
+var DefaultClient = &http.Client{
 	CheckRedirect: checkRedirect,
 	Timeout:       10 * time.Second,
 	Transport: &http.Transport{
 		DisableCompression: true,
-		Proxy: http.ProxyFromEnvironment,
+		Proxy:              http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
-			Timeout: 5 * time.Second,
+			Timeout:   5 * time.Second,
 			KeepAlive: 0,
 		}).DialContext,
 		DisableKeepAlives:   true,
-		MaxIdleConns:          10,
+		MaxIdleConns:        10,
 		TLSHandshakeTimeout: 5 * time.Second,
 	},
 }
@@ -101,24 +99,23 @@ func (r response) Stats() *Stats {
 
 	// return the objects
 	return &Stats{
-		Status:       r.Status(),
-		Header:       r.Header(),
-		HeaderSize:   r.HeaderSize(),
-		BodySize:     r.BodySize(),
-		TimeResponse: r.TimeResponse(now),
-		TimeWait:     r.TimeWait(),
-		TLS:          r.TLS(),
-		TimeDNS:      r.TimeDNS(),
-		TimeTLS:      r.TimeTLS(),
-		Redirects:    r.Redirects(),
-		TimeRedirects:r.TimeRedirects(),
-		TimeTotal:    r.TimeTotal(now),
-		TimeDownload: r.TimeDownload(now),
-		TimeConnect:  r.TimeConnect(),
-		Traces:       traces,
+		Status:        r.Status(),
+		Header:        r.Header(),
+		HeaderSize:    r.HeaderSize(),
+		BodySize:      r.BodySize(),
+		TimeResponse:  r.TimeResponse(now),
+		TimeWait:      r.TimeWait(),
+		TLS:           r.TLS(),
+		TimeDNS:       r.TimeDNS(),
+		TimeTLS:       r.TimeTLS(),
+		Redirects:     r.Redirects(),
+		TimeRedirects: r.TimeRedirects(),
+		TimeTotal:     r.TimeTotal(now),
+		TimeDownload:  r.TimeDownload(now),
+		TimeConnect:   r.TimeConnect(),
+		Traces:        traces,
 	}
 }
-
 
 // Write implementation.
 func (w *sizeWriter) Write(b []byte) (int, error) {
@@ -132,7 +129,7 @@ func (w sizeWriter) Size() int {
 }
 
 func (r *response) last() Trace {
-	return r.traces[len(r.traces) - 1]
+	return r.traces[len(r.traces)-1]
 }
 
 func (r *response) BodySize() int {
@@ -190,7 +187,7 @@ func (r *response) TimeRedirects() time.Duration {
 	}
 
 	first := r.traces[0]
-	last  := r.traces[len(r.traces) - 1]
+	last := r.traces[len(r.traces)-1]
 
 	return last.Start().Sub(first.Start())
 }
@@ -213,7 +210,7 @@ func (r *response) TimeConnect() time.Duration {
 }
 
 func RequestWithClient(client *http.Client, method string, uri string, header http.Header, body io.Reader) (Response, error) {
-	// get the url 
+	// get the url
 	req, err := http.NewRequest(method, uri, body)
 
 	if err != nil {
@@ -231,14 +228,13 @@ func RequestWithClient(client *http.Client, method string, uri string, header ht
 	var out response
 	req = req.WithContext(WithTraces(req.Context(), &out.traces))
 
-
 	res, err := client.Do(req)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// defer everything 
+	// defer everything
 	defer res.Body.Close()
 
 	// filling all variables
@@ -259,6 +255,3 @@ func RequestWithClient(client *http.Client, method string, uri string, header ht
 func Request(method string, uri string, header http.Header, body io.Reader) (Response, error) {
 	return RequestWithClient(DefaultClient, method, uri, header, body)
 }
-
-
-

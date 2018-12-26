@@ -2,27 +2,26 @@ package main
 
 import (
 	"context"
-	"net/http/httptrace"
 	"crypto/tls"
 	"fmt"
+	"net/http/httptrace"
 	"time"
 )
 
 /* Definign all interfaces */
 type Trace interface {
-	Address()               string
-	Start()                 time.Time
-	TLS()                   bool
-	TimeTLS()               time.Duration
-	TimeWait()              time.Duration
+	Address() string
+	Start() time.Time
+	TLS() bool
+	TimeTLS() time.Duration
+	TimeWait() time.Duration
 	TimeResponse(time.Time) time.Duration
-	TimeDNS()               time.Duration
-	TimeTotal(time.Time)    time.Duration
+	TimeDNS() time.Duration
+	TimeTotal(time.Time) time.Duration
 	TimeDownload(time.Time) time.Duration
-	TimeConnect()           time.Duration
-	Stats()                 *Stats
+	TimeConnect() time.Duration
+	Stats() *Stats
 }
-
 
 // definging the struct of the project
 type trace struct {
@@ -37,7 +36,6 @@ type trace struct {
 	dnsEnd    time.Time
 	tcpStart  time.Time
 	tcpEnd    time.Time
-
 }
 
 // accessing the interfaces and struct
@@ -97,8 +95,6 @@ func (t trace) Stats() *Stats {
 	}
 }
 
-
-
 // this method will get all the information of the request and response
 func WithTraces(ctx context.Context, traces *[]Trace) context.Context {
 	// local properti
@@ -131,7 +127,7 @@ func WithTraces(ctx context.Context, traces *[]Trace) context.Context {
 			t.tlsend = time.Now()
 		},
 		// DNSStart is called when a DNS lookup begins.
-		DNSStart: func(_ httptrace.DNSStartInfo)  {
+		DNSStart: func(_ httptrace.DNSStartInfo) {
 			t.dnsStart = time.Now()
 		},
 
@@ -155,7 +151,6 @@ func WithTraces(ctx context.Context, traces *[]Trace) context.Context {
 		GotFirstResponseByte: func() {
 			t.waitEnd = time.Now()
 		},
-
 	})
 }
 
@@ -163,8 +158,3 @@ func WithTraces(ctx context.Context, traces *[]Trace) context.Context {
 func ms(d time.Duration) string {
 	return fmt.Sprintf("%.0fms", float64(d)/float64(time.Millisecond))
 }
-
-
-
-
-

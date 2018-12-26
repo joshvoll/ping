@@ -1,14 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
 func main() {
-
-	res, err := Request("GET", "https://www.google.com/", nil, nil)
+	// get args
+	addr := os.Args[1]
+	res, err := Request("GET", addr, nil, nil)
 
 	if err != nil {
 		fmt.Println("ERROR URL:", err)
